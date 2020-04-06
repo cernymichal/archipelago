@@ -1,22 +1,23 @@
 #!/bin/sh
 
-# Setup
-NEW_KEYMAP=$1
-NEW_ZONE=$2
-NEW_HOSTNAME=$3
-NEW_USER=$4
-GRAPHICS_VENDOR=$(echo $5 | awk '{print tolower($0)}' )
+# Assumptions
+#   Root partition is mounted at $1
+#   Root has /efi with mounted EFI partition
 
-# Download locale and mirrorlist
+# Setup
+NEW_ROOT=$1
+NEW_KEYMAP=$2
+NEW_ZONE=$3
+NEW_HOSTNAME=$4
+NEW_USER=$5
+GRAPHICS_VENDOR=$(echo $6 | awk '{print tolower($0)}' )
+
+# Download pacman config
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
-curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > /mnt/etc/locale.gen
 
 # Upgrade pacman to use multilib
 pacman -Syu
-
-# Select first language from what/locale.gen
-NEW_LANG=$(cat /mnt/etc/locale.gen | head -n1 | awk '{print $1;}') 
 
 # Get microcode package
 MICROCODE=$(
@@ -52,13 +53,16 @@ fi
 timedatectl set-ntp true
 
 # Pacstrap from arch repo
-pacstrap /mnt base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox chromium ffmpeg youtube-dl pandoc feh vlc ranger discord steam
+pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox chromium ffmpeg youtube-dl pandoc feh vlc ranger discord steam
+
+# Download locale
+curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > $NEW_ROOT/etc/locale.gen
 
 # Generate fstab and change root
-genfstab -U /mnt >> /mnt/etc/fstab
+genfstab -U $NEW_ROOT >> $NEW_ROOT/etc/fstab
 
 # Create install script in for chroot
-cat <<EOF > /mnt/install.sh
+cat <<EOF > $NEW_ROOT/install.sh
 #!/bin/sh
 # Change timezone
 ln -sf /usr/share/zoneinfo/$NEW_ZONE /etc/localtime
@@ -68,7 +72,7 @@ hwclock --systohc
 locale-gen
 
 # Set language and keymap
-echo "LANG=$NEW_LANG" >> /etc/locale.conf
+echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" >> /etc/locale.conf
 echo "KEYMAP=$NEW_KEYMAP" >> /etc/vconsole.conf
 
 # Set hostname
@@ -117,7 +121,7 @@ ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
 EOF
 
 # Chroot into the new istall and run the script above
-arch-chroot /mnt /mnt/install.sh
+arch-chroot $NEW_ROOT $NEW_ROOT/install.sh
 
 # Remove the script
-rm /mnt/install.sh
+rm $NEW_ROOT/install.sh
