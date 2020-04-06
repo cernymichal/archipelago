@@ -6,8 +6,8 @@ NEW_USER=$4
 GRAPHICS_VENDOR=$(echo $5 | awk '{print tolower($0)}' )
 
 # Download locale and mirrorlist
-curl -LJO https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
-curl -LJO https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > /mnt/etc/locale.gen
+curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
+curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > /mnt/etc/locale.gen
 
 # Select first language from what/locale.gen
 NEW_LANG=$(cat /mnt/etc/locale.gen | head -n1 | awk '{print $1;}') 
