@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Setup
 NEW_KEYMAP=$1
 NEW_ZONE=$2
@@ -7,7 +9,11 @@ GRAPHICS_VENDOR=$(echo $5 | awk '{print tolower($0)}' )
 
 # Download locale and mirrorlist
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
+curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > /mnt/etc/locale.gen
+
+# Upgrade pacman to use multilib
+pacman -Su
 
 # Select first language from what/locale.gen
 NEW_LANG=$(cat /mnt/etc/locale.gen | head -n1 | awk '{print $1;}') 
@@ -45,13 +51,15 @@ fi
 # Set timedate ntp
 timedatectl set-ntp true
 
-# Pacstrap base + other bins from arch repo
-pacstrap /mnt base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm lightdm-mini-greeter redshift rofi pulseaudio firefox chromium ffmpeg youtube-dl pandoc feh vlc ranger joplin-desktop discord steam steam-fonts
+# Pacstrap from arch repo
+pacstrap /mnt base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox chromium ffmpeg youtube-dl pandoc feh vlc ranger discord steam
 
 # Generate fstab and change root
 genfstab -U /mnt >> /mnt/etc/fstab
-arch-chroot /mnt
 
+# Create install script in for chroot
+cat <<EOF > /mnt/install.sh
+#!/bin/sh
 # Change timezone
 ln -sf /usr/share/zoneinfo/$NEW_ZONE /etc/localtime
 hwclock --systohc
@@ -96,18 +104,20 @@ git clone https://github.com/LemonBoy/bar /usr/local/src/lemonbar
 make -C /usr/local/src/lemonbar clean install
 chown -r $NEW_USER /usr/local/src/lemonbar
 
-# Install opentabletdriver
-yay -Syu opentabletdriver-git
-
-# Install yadm (dotfile managment)
-yay -S yadm-git
+# Install packages from the AUR
+yay -Syu opentabletdriver-git yadm-git lightdm-mini-greeter joplin-desktop steam-fonts
 
 # Clone dotfiles
 sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles
 
 # Link mirrolist and locale.gen
 ln -sf /home/$NEW_USER/.config/mirrorlist /etc/pacman.d/mirrorlist
+ln -sf /home/$NEW_USER/.config/pacman.conf /etc/pacman.conf
 ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
+EOF
 
-# Exit from chroot
-exit
+# Chroot into the new istall and run the script above
+arch-chroot /mnt /mnt/install.sh
+
+# Remove the script
+rm /mnt/install.sh
