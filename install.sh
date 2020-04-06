@@ -121,7 +121,7 @@ ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
 EOF
 
 # Chroot into the new istall and run the script above
-arch-chroot $NEW_ROOT $NEW_ROOT/install.sh
+arch-chroot $NEW_ROOT ./install.sh
 
 # Remove the script
 rm $NEW_ROOT/install.sh
