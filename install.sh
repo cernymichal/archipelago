@@ -14,15 +14,12 @@ NEW_USER=$5
 GRAPHICS_VENDOR=$(echo $6 | awk '{print tolower($0)}' )
 
 # Download pacman config
-echo "Downloading pacman configuration\n"
+echo -e "Downloading pacman configuration\n"
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
 
-# Upgrade pacman to use multilib
-pacman -Su
-
 # Get microcode package
-echo "\n\nDeciding what microcode and graphics drivers to use\n"
+echo -e "\n\nDeciding what microcode and graphics drivers to use\n"
 MICROCODE=$(
     CPU_VENDOR=$(cat /proc/cpuinfo | grep vendor | uniq | grep -oE '[^ ]+$')
     if [[ $CPU_VENDOR == "AuthenticAMD" ]]
@@ -58,28 +55,28 @@ echo "Graphics: $GRAPHICS_DRIVER $OPENGL $OPENGL32"
 timedatectl set-ntp true
 
 # Pacstrap from arch repo
-echo "\n\nInstalling base and other packages through pacstrap\n"
+echo -e "\n\nInstalling base and other packages through pacstrap\n"
 pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox chromium ffmpeg youtube-dl pandoc feh vlc ranger discord steam
 
-echo "\n\nDownloading locale\n"
+echo -e "\n\nDownloading locale\n"
 # Download locale
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > $NEW_ROOT/etc/locale.gen
 
 # Generate fstab and change root
-echo "\n\nGenerating fstab\n"
+echo -e "\n\nGenerating fstab\n"
 genfstab -U $NEW_ROOT >> $NEW_ROOT/etc/fstab
 
 # Create install script in for chroot
-echo "\n\nCreating installation script in the new root\n"
+echo -e "\n\nCreating installation script in the new root\n"
 cat <<EOF > $NEW_ROOT/install.sh
 #!/bin/sh
 # Change timezone
-echo "\\n\\nChanging timezome\\n"
+echo -e "\\n\\nChanging timezome\\n"
 ln -sf /usr/share/zoneinfo/$NEW_ZONE /etc/localtime
 hwclock --systohc
 
 # Generate locale
-echo "\\n\\nSetting up locale, language and keymap\\n"
+echo -e "\\n\\nSetting up locale, language and keymap\\n"
 locale-gen
 
 # Set language and keymap
@@ -87,7 +84,7 @@ echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" >> /etc/locale
 echo "KEYMAP=$NEW_KEYMAP" >> /etc/vconsole.conf
 
 # Set hostname
-echo "\\n\\nSetting hostname and generating hosts\\n"
+echo -e "\\n\\nSetting hostname and generating hosts\\n"
 echo $NEW_HOSTNAME >> /etc/hostname
 
 # Generate hosts
@@ -146,9 +143,9 @@ EOF
 chmod +x $NEW_ROOT/install.sh
 
 # Chroot into the new istall and run the script above
-echo "\n\nRunning install.sh chrooted\n"
+echo -e "\n\nRunning install.sh chrooted\n"
 arch-chroot $NEW_ROOT ./install.sh
 
 # Remove the script
-echo "\n\nRemoving install.sh\n"
+echo -e "\n\nRemoving install.sh\n"
 rm $NEW_ROOT/install.sh
