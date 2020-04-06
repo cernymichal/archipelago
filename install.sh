@@ -17,7 +17,7 @@ curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/m
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
 
 # Upgrade pacman to use multilib
-pacman -Syu
+pacman -Su
 
 # Get microcode package
 MICROCODE=$(
@@ -119,6 +119,7 @@ ln -sf /home/$NEW_USER/.config/mirrorlist /etc/pacman.d/mirrorlist
 ln -sf /home/$NEW_USER/.config/pacman.conf /etc/pacman.conf
 ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
 EOF
+chmod +x $NEW_ROOT/install.sh
 
 # Chroot into the new istall and run the script above
 arch-chroot $NEW_ROOT ./install.sh
