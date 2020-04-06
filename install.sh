@@ -13,7 +13,7 @@ curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/p
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > /mnt/etc/locale.gen
 
 # Upgrade pacman to use multilib
-pacman -Su
+pacman -Syu
 
 # Select first language from what/locale.gen
 NEW_LANG=$(cat /mnt/etc/locale.gen | head -n1 | awk '{print $1;}') 
