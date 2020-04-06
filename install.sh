@@ -19,7 +19,7 @@ curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/m
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
 
 # Get microcode package
-echo -e "\n\nDeciding what microcode and graphics drivers to use\n"
+echo -e "\n>Deciding what microcode and graphics drivers to use\n"
 MICROCODE=$(
     CPU_VENDOR=$(cat /proc/cpuinfo | grep vendor | uniq | grep -oE '[^ ]+$')
     if [[ $CPU_VENDOR == "AuthenticAMD" ]]
@@ -55,28 +55,29 @@ echo "Graphics: $GRAPHICS_DRIVER $OPENGL $OPENGL32"
 timedatectl set-ntp true
 
 # Pacstrap from arch repo
-echo -e "\n\nInstalling base and other packages through pacstrap\n"
-pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox chromium ffmpeg youtube-dl pandoc feh vlc ranger discord steam
+echo -e "\n>Installing base and other packages through pacstrap\n"
+pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
 
-echo -e "\n\nDownloading locale\n"
-# Download locale
+# Download locale and sudoers
+echo -e "\n>Downloading locale\n"
 curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > $NEW_ROOT/etc/locale.gen
+curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/sudoers > $NEW_ROOT/etc/sudoers
 
 # Generate fstab and change root
-echo -e "\n\nGenerating fstab\n"
+echo -e "\n>Generating fstab\n"
 genfstab -U $NEW_ROOT >> $NEW_ROOT/etc/fstab
 
 # Create install script in for chroot
-echo -e "\n\nCreating installation script in the new root\n"
+echo -e "\n>Creating installation script in the new root\n"
 cat <<EOF > $NEW_ROOT/usr/local/install.sh
 #!/bin/sh
 # Change timezone
-echo -e "\\n\\nChanging timezome\\n"
+echo -e "\\n>Changing timezome\\n"
 ln -sf /usr/share/zoneinfo/$NEW_ZONE /etc/localtime
 hwclock --systohc
 
 # Generate locale
-echo -e "\\n\\nSetting up locale, language and keymap\\n"
+echo -e "\\n>Setting up locale, language and keymap\\n"
 locale-gen
 
 # Set language and keymap
@@ -84,19 +85,19 @@ echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" >> /etc/locale
 echo "KEYMAP=$NEW_KEYMAP" >> /etc/vconsole.conf
 
 # Set hostname
-echo -e "\\n\\nSetting hostname and generating hosts\\n"
+echo -e "\\n>Setting hostname and generating hosts\\n"
 echo $NEW_HOSTNAME >> /etc/hostname
 
 # Generate hosts
 echo -e "127.0.0.1\\tlocalhost\\n::1\\t\\tlocalhost\\n127.0.0.1\\t$NEW_HOSTNAME.localdomain $NEW_HOSTNAME" >> /etc/hosts
 
 # Set root password and add a new user
-echo -e "\\n\\nEnter a new password for root\\n"
+echo -e "\\n>Enter a new password for root\\n"
 until passwd
 do
   echo "Try again"
 done
-echo -e "\\n\\nEnter a new password for your user\\n"
+echo -e "\\n>Enter a new password for your user\\n"
 useradd -m -g wheel $NEW_USER
 until passwd $NEW_USER
 do
@@ -104,12 +105,12 @@ do
 done
 
 # Setup bootloader
-echo -e "\\n\\nSetting up grub\\n"
+echo -e "\\n>Setting up grub\\n"
 grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Install yay
-echo -e "\\n\\nInstalling dmw, st, lemonbar and yay packages\\n"
+echo -e "\\n>Installing dmw, st, lemonbar and yay packages\\n"
 git clone https://aur.archlinux.org/yay.git /usr/local/src/yay
 chown -R $NEW_USER /usr/local/src/yay
 $OLD_PWD=$(pwd)
@@ -118,7 +119,7 @@ sudo -u $NEW_USER makepkg -si
 cd $OLD_PWD
 
 # Clone and make dwm, st and lemonbar
-echo -e "\\n\\nInstalling dwm, st and lemon bar\\n"
+echo -e "\\n>Installing dwm, st and lemon bar\\n"
 git clone https://github.com/cernymichal/suckless /usr/local/src/suckless
 make -C /usr/local/src/suckless/st clean install
 make -C /usr/local/src/suckless/dwm clean install
@@ -129,19 +130,21 @@ make -C /usr/local/src/lemonbar clean install
 chown -R $NEW_USER /usr/local/src/lemonbar
 
 # Install packages from the AUR
-yay -Syu opentabletdriver-git yadm-git lightdm-mini-greeter joplin-desktop steam-fonts
+echo -e "\\n>Installing packages from the AUR\\n"
+yay -Syu yadm-git lightdm-mini-greeter
 
 # Clone dotfiles
-echo -e "\\n\\nCloning dotfiles and linking them\\n"
+echo -e "\\n>Cloning dotfiles and linking them\\n"
 sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles
 
-# Link mirrolist and locale.gen
+# Link mirrorlist, pacman.conf, locale.gen and sudoers
 ln -sf /home/$NEW_USER/.config/mirrorlist /etc/pacman.d/mirrorlist
 ln -sf /home/$NEW_USER/.config/pacman.conf /etc/pacman.conf
 ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
+ln -sf /home/$NEW_USER/.config/sudoers /etc/sudoers
 EOF
 chmod +x $NEW_ROOT/usr/local/install.sh
 
 # Chroot into the new istall and run the script above
-echo -e "\n\nRunning install.sh chrooted\n"
+echo -e "\n>Running install.sh chrooted\n"
 arch-chroot $NEW_ROOT ./usr/local/install.sh
