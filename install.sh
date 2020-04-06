@@ -15,27 +15,27 @@ NEW_LANG=$(cat /mnt/etc/locale.gen | head -n1 | awk '{print $1;}')
 # Get microcode package
 MICROCODE=$(
     CPU_VENDOR=$(cat /proc/cpuinfo | grep vendor | uniq | gerp -oE '[^ ]+$')
-    if [ $CPU_VENDOR = 'AuthenticAMD' ]
+    if [ $CPU_VENDOR == 'AuthenticAMD' ]
     then
         echo 'amd-ucode'
-    elif [ $CPU_VENDOR = 'GenuineIntel' ]
+    elif [ $CPU_VENDOR == 'GenuineIntel' ]
     then
         echo 'intel-ucode'
     fi
 )
 
 # Graphics
-if [ $GRAPHICS_VENDOR = 'amd' ]
+if [ $GRAPHICS_VENDOR == 'amd' ]
 then
     GRAPHICS_DRIVER=xf86-video-amdgpu
     OPENGL=mesa
     OPENGL32=lib32-mesa
-elif [ $GRAPHICS_VENDOR = 'nvidia' ]
+elif [ $GRAPHICS_VENDOR == 'nvidia' ]
 then
     GRAPHICS_DRIVER=nvidia
     OPENGL=nvidia-utils
     OPENGL32=lib32-nvidia-utils
-elif [ $GRAPHICS_VENDOR = 'intel' ]
+elif [ $GRAPHICS_VENDOR == 'intel' ]
 then
     GRAPHICS_DRIVER=nvidia
     OPENGL=nvidia-utils
