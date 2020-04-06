@@ -68,7 +68,7 @@ genfstab -U $NEW_ROOT >> $NEW_ROOT/etc/fstab
 
 # Create install script in for chroot
 echo -e "\n\nCreating installation script in the new root\n"
-cat <<EOF > $NEW_ROOT/install.sh
+cat <<EOF > $NEW_ROOT/usr/local/install.sh
 #!/bin/sh
 # Change timezone
 echo -e "\\n\\nChanging timezome\\n"
@@ -88,15 +88,15 @@ echo -e "\\n\\nSetting hostname and generating hosts\\n"
 echo $NEW_HOSTNAME >> /etc/hostname
 
 # Generate hosts
-echo -e "127.0.0.1\tlocalhost\n::1\t\tlocalhost\n127.0.0.1\t$NEW_HOSTNAME.localdomain $NEW_HOSTNAME" >> /etc/hosts
+echo -e "127.0.0.1\\tlocalhost\\n::1\\t\\tlocalhost\\n127.0.0.1\\t$NEW_HOSTNAME.localdomain $NEW_HOSTNAME" >> /etc/hosts
 
 # Set root password and add a new user
-echo"\\n\\nEnter a new password for root\\n"
+echo -e "\\n\\nEnter a new password for root\\n"
 until passwd
 do
   echo "Try again"
 done
-echo"\\n\\nEnter a new password for your user\\n"
+echo -e "\\n\\nEnter a new password for your user\\n"
 useradd -m -g wheel $NEW_USER
 until passwd $NEW_USER
 do
@@ -104,12 +104,12 @@ do
 done
 
 # Setup bootloader
-echo"\\n\\nSetting up grub\\n"
+echo -e "\\n\\nSetting up grub\\n"
 grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Install yay
-echo"\\n\\nInstalling dmw, st, lemonbar and yay packages\\n"
+echo -e "\\n\\nInstalling dmw, st, lemonbar and yay packages\\n"
 git clone https://aur.archlinux.org/yay.git /usr/local/src/yay
 chown -R $NEW_USER /usr/local/src/yay
 $OLD_PWD=$(pwd)
@@ -118,7 +118,7 @@ sudo -u $NEW_USER makepkg -si
 cd $OLD_PWD
 
 # Clone and make dwm, st and lemonbar
-echo"\\n\\nInstalling dwm, st and lemon bar\\n"
+echo -e "\\n\\nInstalling dwm, st and lemon bar\\n"
 git clone https://github.com/cernymichal/suckless /usr/local/src/suckless
 make -C /usr/local/src/suckless/st clean install
 make -C /usr/local/src/suckless/dwm clean install
@@ -132,7 +132,7 @@ chown -R $NEW_USER /usr/local/src/lemonbar
 yay -Syu opentabletdriver-git yadm-git lightdm-mini-greeter joplin-desktop steam-fonts
 
 # Clone dotfiles
-echo"\\n\\nCloning dotfiles and linking them\\n"
+echo -e "\\n\\nCloning dotfiles and linking them\\n"
 sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles
 
 # Link mirrolist and locale.gen
@@ -140,12 +140,8 @@ ln -sf /home/$NEW_USER/.config/mirrorlist /etc/pacman.d/mirrorlist
 ln -sf /home/$NEW_USER/.config/pacman.conf /etc/pacman.conf
 ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
 EOF
-chmod +x $NEW_ROOT/install.sh
+chmod +x $NEW_ROOT/usr/local/install.sh
 
 # Chroot into the new istall and run the script above
 echo -e "\n\nRunning install.sh chrooted\n"
-arch-chroot $NEW_ROOT ./install.sh
-
-# Remove the script
-echo -e "\n\nRemoving install.sh\n"
-rm $NEW_ROOT/install.sh
+arch-chroot $NEW_ROOT ./usr/local/install.sh
