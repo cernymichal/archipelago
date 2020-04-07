@@ -129,7 +129,7 @@ sudo -u $NEW_USER make -C /usr/local/src/lemonbar clean install
 
 # Install packages from the AUR
 echo -e "\\n>Installing packages from the AUR\\n"
-yay -Syu yadm lightdm-mini-greeter
+sudo -u $NEW_USER yay -Syu yadm lightdm-mini-greeter
 
 # Clone dotfiles
 echo -e "\\n>Cloning dotfiles and linking them\\n"
