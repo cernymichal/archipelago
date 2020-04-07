@@ -113,21 +113,19 @@ grub-mkconfig -o /boot/grub/grub.cfg
 echo -e "\\n>Installing dmw, st, lemonbar and yay packages\\n"
 git clone https://aur.archlinux.org/yay.git /usr/local/src/yay
 chown -R $NEW_USER /usr/local/src/yay
-$OLD_PWD=$(pwd)
 cd /usr/local/src/yay
 sudo -u $NEW_USER makepkg -si
-cd $OLD_PWD
 
 # Clone and make dwm, st and lemonbar
 echo -e "\\n>Installing dwm, st and lemon bar\\n"
 git clone https://github.com/cernymichal/suckless /usr/local/src/suckless
-make -C /usr/local/src/suckless/st clean install
-make -C /usr/local/src/suckless/dwm clean install
 chown -R $NEW_USER /usr/local/src/suckless
+sudo -u $NEW_USER make -C /usr/local/src/suckless/st clean install
+sudo -u $NEW_USER make -C /usr/local/src/suckless/dwm clean install
 
 git clone https://github.com/LemonBoy/bar /usr/local/src/lemonbar
-make -C /usr/local/src/lemonbar clean install
 chown -R $NEW_USER /usr/local/src/lemonbar
+sudo -u $NEW_USER make -C /usr/local/src/lemonbar clean install
 
 # Install packages from the AUR
 echo -e "\\n>Installing packages from the AUR\\n"
