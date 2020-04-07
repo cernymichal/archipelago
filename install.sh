@@ -131,17 +131,18 @@ chown -R $NEW_USER /usr/local/src/lemonbar
 
 # Install packages from the AUR
 echo -e "\\n>Installing packages from the AUR\\n"
-yay -Syu yadm-git lightdm-mini-greeter
+yay -Syu yadm lightdm-mini-greeter
 
 # Clone dotfiles
 echo -e "\\n>Cloning dotfiles and linking them\\n"
 sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles
 
-# Link mirrorlist, pacman.conf, locale.gen and sudoers
+# Link stuff and copy sudoers
 ln -sf /home/$NEW_USER/.config/mirrorlist /etc/pacman.d/mirrorlist
 ln -sf /home/$NEW_USER/.config/pacman.conf /etc/pacman.conf
 ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
-ln -sf /home/$NEW_USER/.config/sudoers /etc/sudoers
+ln -sf /home/$NEW_USER/.profile /home/$NEW_USER/.bashrc
+cp -f /home/$NEW_USER/.config/sudoers /etc/sudoers
 EOF
 chmod +x $NEW_ROOT/usr/local/install.sh
 
