@@ -56,7 +56,7 @@ timedatectl set-ntp true
 
 # Pacstrap from arch repo
 echo -e "\n>Installing base and other packages through pacstrap\n"
-pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
+pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs w3m imagemagick grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
 
 # Download locale and sudoers
 echo -e "\n>Downloading locale\n"
@@ -133,14 +133,12 @@ sudo -u $NEW_USER yay -Syu yadm lightdm-mini-greeter
 
 # Clone dotfiles
 echo -e "\\n>Cloning dotfiles and linking them\\n"
-sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles
+rm /home/$NEW_USER/.bashrc
+rm -rf /home/$NEW_USER/.config
+sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles --bootstrap
 
-# Link stuff and copy sudoers
-ln -sf /home/$NEW_USER/.config/mirrorlist /etc/pacman.d/mirrorlist
-ln -sf /home/$NEW_USER/.config/pacman.conf /etc/pacman.conf
-ln -sf /home/$NEW_USER/.config/locale.gen /etc/locale.gen
-ln -sf /home/$NEW_USER/.profile /home/$NEW_USER/.bashrc
-cp -f /home/$NEW_USER/.config/sudoers /etc/sudoers
+# Link mirrorlist, pacman.conf adn locale.gen and copy sudoers
+sudo -u $NEW_USER /home/$NEW_USER/.local/bin/linkdots.sh
 
 # Enable services
 systemctl enable NetworkManager
