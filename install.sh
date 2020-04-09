@@ -140,6 +140,9 @@ sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles --bootstrap
 # Link mirrorlist, pacman.conf adn locale.gen and copy sudoers
 sudo -u $NEW_USER /home/$NEW_USER/.local/bin/linkdots.sh
 
+# Link dmenu to rofi
+ln -s /usr/bin/dmenu /usr/bin/rofi
+
 # Enable services
 systemctl enable NetworkManager
 EOF
