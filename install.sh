@@ -118,10 +118,13 @@ sudo -u $NEW_USER makepkg -si
 
 # Clone and make dwm, st and lemonbar
 echo -e "\\n>Installing dwm, st and lemon bar\\n"
-git clone https://github.com/cernymichal/suckless /usr/local/src/suckless
-chown -R $NEW_USER /usr/local/src/suckless
-make -C /usr/local/src/suckless/st clean install
-make -C /usr/local/src/suckless/dwm clean install
+git clone https://github.com/cernymichal/dwm /usr/local/src/dwm
+chown -R $NEW_USER /usr/local/src/dwm
+make -C /usr/local/src/dwm clean install
+
+git clone https://github.com/cernymichal/st /usr/local/src/st
+chown -R $NEW_USER /usr/local/src/st
+make -C /usr/local/src/st clean install
 
 git clone https://github.com/LemonBoy/bar /usr/local/src/lemonbar
 chown -R $NEW_USER /usr/local/src/lemonbar
