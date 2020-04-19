@@ -7,11 +7,12 @@ clear
 
 # Setup
 NEW_ROOT=$1
-NEW_KEYMAP=$2
-NEW_ZONE=$3
-NEW_HOSTNAME=$4
-NEW_USER=$5
-GRAPHICS_VENDOR=$(echo $6 | awk '{print tolower($0)}' )
+NEW_KEYLAYOUT=$2
+NEW_KEYMODEL=$3
+NEW_ZONE=$4
+NEW_HOSTNAME=$5
+NEW_USER=$6
+GRAPHICS_VENDOR=$(echo $7 | awk '{print tolower($0)}' )
 
 # Download pacman config
 echo -e "Downloading pacman configuration\n"
@@ -56,7 +57,7 @@ timedatectl set-ntp true
 
 # Pacstrap from arch repo
 echo -e "\n>Installing base and other packages through pacstrap\n"
-pacstrap $NEW_ROOT base base-devel linux linux-firmware $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs w3m imagemagick grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
+pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs w3m imagemagick grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
 
 # Download locale and sudoers
 echo -e "\n>Downloading locale\n"
@@ -82,7 +83,8 @@ locale-gen
 
 # Set language and keymap
 echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" >> /etc/locale.conf
-echo "KEYMAP=$NEW_KEYMAP" >> /etc/vconsole.conf
+echo "KEYMAP=$NEW_KEYLAYOUT-$NEW_KEYMODEL" >> /etc/vconsole.conf
+localectl --no-convert $NEW_KEYLAYOUT $NEW_KEYMODEL
 
 # Set hostname
 echo -e "\\n>Setting hostname and generating hosts\\n"
