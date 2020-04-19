@@ -84,7 +84,7 @@ locale-gen
 # Set language and keymap
 echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" >> /etc/locale.conf
 echo "KEYMAP=$NEW_KEYLAYOUT-$NEW_KEYMODEL" >> /etc/vconsole.conf
-localectl --no-convert $NEW_KEYLAYOUT $NEW_KEYMODEL
+localectl --no-convert set-x11-keymap $NEW_KEYLAYOUT $NEW_KEYMODEL
 
 # Set hostname
 echo -e "\\n>Setting hostname and generating hosts\\n"
@@ -145,8 +145,8 @@ sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles --bootstrap
 # Link mirrorlist, pacman.conf adn locale.gen and copy sudoers
 sudo -u $NEW_USER /home/$NEW_USER/.local/bin/linkdots.sh
 
-# Link dmenu to rofi
-ln -s /usr/bin/dmenu /usr/bin/rofi
+# Link rofi to dmenu
+ln -s /usr/bin/rofi /usr/bin/dmenu
 
 # Enable services
 systemctl enable NetworkManager
