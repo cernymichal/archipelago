@@ -57,7 +57,7 @@ timedatectl set-ntp true
 
 # Pacstrap from arch repo
 echo -e "\n>Installing base and other packages through pacstrap\n"
-pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs w3m imagemagick grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
+pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager sxhkd go git grub efibootmgr python python-pip neofetch btrfs-progs w3m imagemagick grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
 
 # Download locale and sudoers
 echo -e "\n>Downloading locale\n"
@@ -142,7 +142,7 @@ rm /home/$NEW_USER/.bashrc
 rm -rf /home/$NEW_USER/.config
 sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles --bootstrap
 
-# Link mirrorlist, pacman.conf adn locale.gen and copy sudoers
+# Link mirrorlist, pacman.conf, locale.gen and bashrc and copy sudoers
 sudo -u $NEW_USER /home/$NEW_USER/.local/bin/linkdots.sh
 
 # Link rofi to dmenu
