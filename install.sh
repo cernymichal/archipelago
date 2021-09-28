@@ -6,27 +6,65 @@ clear
 #   Root has /efi with mounted EFI partition
 
 # Setup
-NEW_ROOT=$1
-NEW_KEYLAYOUT=$2
-NEW_KEYMODEL=$3
-NEW_ZONE=$4
-NEW_HOSTNAME=$5
-NEW_USER=$6
-GRAPHICS_VENDOR=$(echo $7 | awk '{print tolower($0)}' )
+NEW_ROOT="$1"
+NEW_KEYMAP="$2"
+NEW_X11_KEYMAP="$3"
+NEW_ZONE="$4"
+NEW_HOSTNAME="$5"
+NEW_USER="$6"
+GRAPHICS_VENDOR=$(echo "$7" | tr '[:upper:]' '[:lower:]')
+
+NEW_USER_PASSWORD=""
+NEW_ROOT_PASSWORD=""
+
+read_secret () {
+    stty -echo
+    trap 'stty echo' EXIT
+    read "$@"
+    stty echo
+    trap - EXIT
+    echo
+}
+
+read_password () {
+    local password=""
+    local password2=""
+    while true
+    do
+        printf "Password: "
+        read_secret password
+        printf "Repeat password: "
+        read_secret password2
+
+        if [ "$password" = "$password2" ]
+        then
+            eval "$@='$password'"
+            return
+        else
+            echo "Passwords don't match"
+        fi
+    done
+}
+
+# Get passwords
+echo -e "\n>Enter a new password for your user\n"
+read_password NEW_USER_PASSWORD
+echo -e "\n>Enter a new password for root\n"
+read_password NEW_ROOT_PASSWORD
 
 # Download pacman config
 echo -e "Downloading pacman configuration\n"
-curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
-curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
+curl -L https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/mirrorlist > /etc/pacman.d/mirrorlist
+curl -L https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/pacman.conf > /etc/pacman.conf
 
 # Get microcode package
 echo -e "\n>Deciding what microcode and graphics drivers to use\n"
 MICROCODE=$(
     CPU_VENDOR=$(cat /proc/cpuinfo | grep vendor | uniq | grep -oE '[^ ]+$')
-    if [[ $CPU_VENDOR == "AuthenticAMD" ]]
+    if [ "$CPU_VENDOR" = "AuthenticAMD" ]
     then
         echo "amd-ucode"
-    elif [[ $CPU_VENDOR == "GenuineIntel" ]]
+    elif [ "$CPU_VENDOR" = "GenuineIntel" ]
     then
         echo "intel-ucode"
     fi
@@ -34,17 +72,17 @@ MICROCODE=$(
 echo "Microcode: $MICROCODE"
 
 # Graphics
-if [[ $GRAPHICS_VENDOR == "amd" ]]
+if [ "$GRAPHICS_VENDOR" = "amd" ]
 then
     GRAPHICS_DRIVER=xf86-video-amdgpu
     OPENGL=mesa
     OPENGL32=lib32-mesa
-elif [[ $GRAPHICS_VENDOR == "nvidia" ]]
+elif [ "$GRAPHICS_VENDOR" = "nvidia" ]
 then
     GRAPHICS_DRIVER=nvidia
     OPENGL=nvidia-utils
     OPENGL32=lib32-nvidia-utils
-elif [[ $GRAPHICS_VENDOR == "intel" ]]
+elif [ "$GRAPHICS_VENDOR" = "intel" ]
 then
     GRAPHICS_DRIVER=nvidia
     OPENGL=nvidia-utils
@@ -57,12 +95,12 @@ timedatectl set-ntp true
 
 # Pacstrap from arch repo
 echo -e "\n>Installing base and other packages through pacstrap\n"
-pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim htop sudo networkmanager sxhkd go git grub efibootmgr python python-pip neofetch btrfs-progs w3m imagemagick grep xorg-xinit xorg lightdm redshift rofi pulseaudio firefox feh vlc ranger
+pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim nano htop sudo networkmanager sxhkd go git grub efibootmgr python python-pip neofetch btrfs-progs grep xorg-xinit xorg gnome gnome-tweak-tool drawing
 
 # Download locale and sudoers
 echo -e "\n>Downloading locale\n"
-curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > $NEW_ROOT/etc/locale.gen
-curl -LJ https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/sudoers > $NEW_ROOT/etc/sudoers
+curl -L https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/locale.gen > $NEW_ROOT/etc/locale.gen
+curl -L https://raw.githubusercontent.com/cernymichal/dotfiles/master/.config/sudoers > $NEW_ROOT/etc/sudoers
 
 # Generate fstab and change root
 echo -e "\n>Generating fstab\n"
@@ -70,7 +108,7 @@ genfstab -U $NEW_ROOT >> $NEW_ROOT/etc/fstab
 
 # Create install script in for chroot
 echo -e "\n>Creating installation script in the new root\n"
-cat <<EOF > $NEW_ROOT/usr/local/install.sh
+cat <<EOF > $NEW_ROOT/install.sh
 #!/bin/sh
 # Change timezone
 echo -e "\\n>Changing timezome\\n"
@@ -82,29 +120,21 @@ echo -e "\\n>Setting up locale, language and keymap\\n"
 locale-gen
 
 # Set language and keymap
-echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" >> /etc/locale.conf
-echo "KEYMAP=$NEW_KEYLAYOUT-$NEW_KEYMODEL" >> /etc/vconsole.conf
-localectl --no-convert set-x11-keymap $NEW_KEYLAYOUT $NEW_KEYMODEL
+echo "LANG=$(cat /etc/locale.gen | head -n1 | awk '{print $1;}')" > /etc/locale.conf
+echo "KEYMAP=$NEW_KEYMAP" > /etc/vconsole.conf
+localectl --no-convert set-x11-keymap $NEW_X11_KEYMAP
 
 # Set hostname
 echo -e "\\n>Setting hostname and generating hosts\\n"
-echo $NEW_HOSTNAME >> /etc/hostname
+echo $NEW_HOSTNAME > /etc/hostname
 
 # Generate hosts
-echo -e "127.0.0.1\\tlocalhost\\n::1\\t\\tlocalhost\\n127.0.0.1\\t$NEW_HOSTNAME.localdomain $NEW_HOSTNAME" >> /etc/hosts
+echo -e "127.0.0.1\\tlocalhost\\n::1\\t\\tlocalhost\\n127.0.0.1\\t$NEW_HOSTNAME.localdomain\\t$NEW_HOSTNAME" > /etc/hosts
 
 # Set root password and add a new user
-echo -e "\\n>Enter a new password for root\\n"
-until passwd
-do
-  echo "Try again"
-done
-echo -e "\\n>Enter a new password for your user\\n"
+echo -e "$NEW_ROOT_PASSWORD\\n$NEW_ROOT_PASSWORD" | passwd
 useradd -m -g wheel $NEW_USER
-until passwd $NEW_USER
-do
-  echo "Try again"
-done
+echo -e "$NEW_USER_PASSWORD\\n$NEW_USER_PASSWORD" | passwd $NEW_USER
 
 # Setup bootloader
 echo -e "\\n>Setting up grub\\n"
@@ -112,47 +142,36 @@ grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=GRUB
 grub-mkconfig -o /boot/grub/grub.cfg
 
 # Install yay
-echo -e "\\n>Installing dmw, st, lemonbar and yay packages\\n"
+echo -e "\\n>Installing yay\\n"
 git clone https://aur.archlinux.org/yay.git /usr/local/src/yay
 chown -R $NEW_USER /usr/local/src/yay
 cd /usr/local/src/yay
 sudo -u $NEW_USER makepkg -si
 
-# Clone and make dwm, st and lemonbar
-echo -e "\\n>Installing dwm, st and lemon bar\\n"
-git clone https://github.com/cernymichal/dwm /usr/local/src/dwm
-chown -R $NEW_USER /usr/local/src/dwm
-make -C /usr/local/src/dwm clean install
-
-git clone https://github.com/cernymichal/st /usr/local/src/st
-chown -R $NEW_USER /usr/local/src/st
-make -C /usr/local/src/st clean install
-
-git clone https://github.com/LemonBoy/bar /usr/local/src/lemonbar
-chown -R $NEW_USER /usr/local/src/lemonbar
-make -C /usr/local/src/lemonbar clean install
-
 # Install packages from the AUR
 echo -e "\\n>Installing packages from the AUR\\n"
-sudo -u $NEW_USER yay -Syu yadm lightdm-mini-greeter
+yay -Syu yadm
 
 # Clone dotfiles
 echo -e "\\n>Cloning dotfiles and linking them\\n"
 rm /home/$NEW_USER/.bashrc
 rm -rf /home/$NEW_USER/.config
-sudo -u $NEW_USER yadm clone https://github.com/cernymichal/dotfiles --bootstrap
+sudo -u $NEW_USER yadm clone --bootstrap -b master https://github.com/cernymichal/dotfiles
 
 # Link mirrorlist, pacman.conf, locale.gen and bashrc and copy sudoers
 sudo -u $NEW_USER /home/$NEW_USER/.local/bin/linkdots.sh
 
-# Link rofi to dmenu
-ln -s /usr/bin/rofi /usr/bin/dmenu
+# Download script for other packages
+sudo -u $NEW_USER curl -L https://raw.githubusercontent.com/cernymichal/archipelago/master/other_pkgs.sh > /home/$NEW_USER/other_pkgs.sh
+chmod +x /home/$NEW_USER/other_pkgs.sh
 
 # Enable services
 systemctl enable NetworkManager
+systemctl enable gdm.service
 EOF
-chmod +x $NEW_ROOT/usr/local/install.sh
+chmod +x $NEW_ROOT/install.sh
 
 # Chroot into the new istall and run the script above
 echo -e "\n>Running install.sh chrooted\n"
-arch-chroot $NEW_ROOT ./usr/local/install.sh
+arch-chroot $NEW_ROOT /install.sh
+rm $NEW_ROOT/install.sh
