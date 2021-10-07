@@ -156,7 +156,7 @@ yay -Syu yadm
 echo -e "\\n>Cloning dotfiles and linking them\\n"
 rm /home/$NEW_USER/.bashrc
 rm -rf /home/$NEW_USER/.config
-sudo -u $NEW_USER yadm clone --bootstrap -b master https://github.com/cernymichal/dotfiles
+sudo -u $NEW_USER yadm clone --bootstrap -b master git@github.com:cernymichal/dotfiles.git
 
 # Link mirrorlist, pacman.conf, locale.gen and bashrc and copy sudoers
 sudo -u $NEW_USER /home/$NEW_USER/.local/bin/linkdots.sh
