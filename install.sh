@@ -95,7 +95,7 @@ timedatectl set-ntp true
 
 # Pacstrap from arch repo
 echo -e "\n>Installing base and other packages through pacstrap\n"
-pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim nano htop networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs xorg-xinit xorg gnome gnome-tweak-tool drawing
+pacstrap $NEW_ROOT base base-devel linux linux-firmware xf86-input-libinput $MICROCODE $GRAPHICS_DRIVER $OPENGL $OPENGL32 neovim nano htop networkmanager go git grub efibootmgr python python-pip neofetch btrfs-progs xorg-xinit xorg gnome gnome-tweak-tool drawing tree
 
 # Download locale and sudoers
 echo -e "\n>Downloading locale\n"
